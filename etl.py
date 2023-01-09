@@ -105,7 +105,7 @@ def process_log_data(spark, input_data, output_data):
     df = df.withColumn('start_time', get_datetime('timestamp'))
 
     # extract columns to create time table
-    time_table = df.select(
+    time_table_df = df.select(
         'start_time',
         hour('start_time').alias('hour'),
         dayofmonth('start_time').alias('day'),
@@ -116,7 +116,7 @@ def process_log_data(spark, input_data, output_data):
     ).dropDuplicates()
 
     # write time table to parquet files partitioned by year and month
-    time_table = time_table.write.parquet(
+    time_table = time_table_df.write.parquet(
         os.path.join(output_data, 'time'),
         mode='overwrite',
         partitionBy=['year', 'month']
@@ -131,6 +131,7 @@ def process_log_data(spark, input_data, output_data):
 
     song_df.createOrReplaceTempView('songs')
     df.createOrReplaceTempView('events')
+    time_table_df.createOrReplaceTempView('time')
 
     # extract columns from joined song and log datasets to create songplays table
     songplays_table = spark.sql("""
@@ -142,7 +143,7 @@ def process_log_data(spark, input_data, output_data):
         FROM events e
         JOIN songs s
          ON (e.artist = s.artist_name AND e.song = s.title AND e.length = s.duration)
-        JOIN time_table t USING(start_time)
+        JOIN time t USING(start_time)
         WHERE e.page = 'NextSong'
     """)
 
