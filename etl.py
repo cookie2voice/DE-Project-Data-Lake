@@ -35,16 +35,17 @@ def process_song_data(spark, input_data, output_data):
         None
     """
     # get filepath to song data file
-    #     song_data = os.path.join(input_data, 'song_data/*/*/*.json')
-    song_data = os.path.join(
-        input_data, 'song_data/A/B/C/TRABCEI128F424C983.json')
+    song_data = os.path.join(input_data, 'song_data/*/*/*/*.json')
 
     # read song data file
     df = spark.read.json(song_data)
 
     # extract columns to create songs table
-    songs_table = df.select('song_id', 'title',
-                            'artist_id', 'year', 'duration').dropDuplicates()
+    songs_table = df.select('song_id',
+                            'title',
+                            'artist_id',
+                            'year',
+                            'duration').dropDuplicates()
 
     # write songs table to parquet files partitioned by year and artist
     songs_table = songs_table.write.parquet(
@@ -53,8 +54,11 @@ def process_song_data(spark, input_data, output_data):
         partitionBy=['year', 'artist_id'])
 
     # extract columns to create artists table
-    artists_table = df.select('artist_id', 'artist_name', 'artist_location',
-                              'artist_latitude', 'artist_longitude').dropDuplicates()
+    artists_table = df.select('artist_id',
+                            'artist_name',
+                            'artist_location',
+                            'artist_latitude',
+                            'artist_longitude').dropDuplicates()
 
     # write artists table to parquet files
     artists_table = artists_table.write.parquet(
@@ -76,9 +80,7 @@ def process_log_data(spark, input_data, output_data):
         None
     """
     # get filepath to log data file
-    #     log_data = input_data + "log_data/*/*/*.json"
-    log_data = os.path.join(
-        input_data, 'log_data/2018/11/2018-11-12-events.json')
+    log_data = os.path.join(input_data, 'log_data/*/*/*.json')
 
     # read log data file
     df = spark.read.json(log_data)
@@ -89,7 +91,8 @@ def process_log_data(spark, input_data, output_data):
     users_table = df.select('userId',
                             'firstName',
                             'lastName',
-                            'gender', 'level').dropDuplicates()
+                            'gender',
+                            'level').dropDuplicates()
 
     # write users table to parquet files
     users_table = users_table.write.parquet(
@@ -123,9 +126,7 @@ def process_log_data(spark, input_data, output_data):
     )
 
     # read in song data to use for songplays table
-#     song_df = spark.read.json(os.path.join(input_data, 'song_data/*/*/*.json'))
-    song_data = os.path.join(
-        input_data, 'song_data/A/B/C/TRABCEI128F424C983.json')
+    song_data = spark.read.json(os.path.join(input_data, 'song_data/*/*/*/*.json'))
     df = df.withColumn('songplay_id', monotonically_increasing_id())
     song_df = spark.read.json(song_data)
 
@@ -158,11 +159,8 @@ def process_log_data(spark, input_data, output_data):
 def main():
     """
     - Create spark session.
-
     - Process input files and load data into tables.
-
     - Closes the connection.
-
     """
     spark = create_spark_session()
     input_data = "s3a://udacity-dend/"
